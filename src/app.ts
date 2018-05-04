@@ -11,7 +11,7 @@ require('dotenv').config()
 
 var cors = require('cors');
 var corsOptions = {
-  origin: ['http://localhost:3000', 'http://payr.com.s3-website-us-west-2.amazonaws.com/'],
+  origin: ['http://localhost:3000', 'http://payr.com.s3-website-us-west-2.amazonaws.com'],
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204 
 }
 
