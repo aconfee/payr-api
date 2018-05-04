@@ -103,9 +103,7 @@ jobs:
           name: Deploy to Elastic Beanstalk
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              eb deploy --staged tinycrit-prod
-            elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
-              eb deploy --staged tinycrit-staging
+              eb deploy --staged payr-prod
             fi
 
 workflows:
@@ -120,4 +118,3 @@ workflows:
             branches:
               only:
                 - master
-                - staging
