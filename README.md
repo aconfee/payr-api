@@ -1,10 +1,10 @@
-[![CircleCI](https://circleci.com/gh/aconfee/tinycrit-api.svg?style=svg)](https://circleci.com/gh/aconfee/tinycrit-api)
+[![CircleCI](https://circleci.com/gh/aconfee/payr-api.svg?style=svg)](https://circleci.com/gh/aconfee/payr-api)
 
-# TinyCrit
-###### api.tinycrit.com
+# Payr
+###### payr.us-west-2.elasticbeanstalk.com
 
 ### Description
-Super secret.
+Boilerplate
 
 ### Setup
 
@@ -15,10 +15,14 @@ Assuming you're starting from scratch, here's how to set everything up for devel
 
 ### Stack
 * Node / Express (generated from Express generator https://expressjs.com/en/starter/generator.html)
+* Sequelize ORM
+* Typescript
 
 ### Environment and Workflow
 * `npm start` to start running on port 8080.
 * `npm test` to run all unit tests.
+* `npm run build` compiles and builds
+* `npm start-prod` runs from the build folder.
 * .vscode/launch.json included with VS Code defaults.### Git branching
 
 ### Git branching
@@ -39,7 +43,7 @@ Currently, no building is necessary.
 
 Simply push to, or merge a commit to the master branch. 
 
-This repo is being watched by CircleCI https://circleci.com/gh/aconfee/tinycrit-api. It will be deployed to the tinycrit-prod Elastic Beanstalk environment and live on api.tinycrit.com. 
+This repo is being watched by CircleCI https://circleci.com/gh/aconfee/payr-api. It will be deployed to the tinycrit-prod Elastic Beanstalk environment and live on api.tinycrit.com. 
 
 ### Architecture
 * Served on Elastic Beanstalk
