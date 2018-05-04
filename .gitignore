@@ -1,0 +1,15 @@
+# Production build
+build/ 
+
+# Dependency directories
+node_modules/
+
+# Environment
+.env
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/config.yml
+
+# misc
+.DS_Store

@@ -1,0 +1,123 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/repo
+
+    docker:
+      - image: circleci/node:8.11.1-stretch
+
+    steps:
+      - checkout
+
+      - run:
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+
+      - restore_cache:
+          keys:
+          - v3-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v3-dependencies-
+
+      - run: 
+          name: Install npm
+          command: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v3-dependencies-{{ checksum "package.json" }}
+        
+      # run tests!
+      - run: 
+          name: Run tests
+          command: npm run test
+
+      - run: 
+          name: Build
+          command: npm run build
+
+      - save_cache:
+          key: v3-dist-{{ .Environment.CIRCLE_BRANCH}}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - build
+
+      # Save files needed for EB deploy
+      - save_cache:
+          paths:
+            - package.json
+            - .elasticbeanstalk
+            - .ebextensions
+            - .git
+          key: v3-deploy-scripts
+
+  deploy:
+    working_directory: ~/repo
+
+    docker:
+      - image: circleci/node:8.11.1-stretch
+
+    steps: 
+
+      - run: 
+          name: Show current branch
+          command: echo ${CIRCLE_BRANCH}
+
+      # Restore the build/dist folder
+      - restore_cache:
+          key: v3-dist-{{ .Environment.CIRCLE_BRANCH }}-{{ .Environment.CIRCLE_SHA1 }}
+
+      # Restore EB deploy configs
+      - restore_cache:
+          key: v3-deploy-scripts
+
+      # Restore or install production node modules
+      - restore_cache:
+          keys:
+          - v3-production-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v3-production-dependencies-
+
+      - run: 
+          name: Install npm
+          command: npm install --production
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v3-production-dependencies-{{ checksum "package.json" }}
+
+      - run:
+          name: Stage node modules
+          command: git add .
+
+      - run:
+          name: Installing deployment dependencies
+          working_directory: /
+          command: |
+            sudo apt-get -y -qq update
+            sudo apt-get install python-pip python-dev build-essential
+            sudo pip install awsebcli --upgrade
+
+      - run: 
+          name: Deploy to Elastic Beanstalk
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              eb deploy --staged tinycrit-prod
+            elif [ "${CIRCLE_BRANCH}" == "staging" ]; then
+              eb deploy --staged tinycrit-staging
+            fi
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - staging

@@ -1,0 +1,11 @@
+branch-defaults:
+  master:
+    environment: payr-prod
+global:
+  application_name: payr-api
+  default_ec2_keyname: null
+  default_platform: Node.js
+  default_region: us-west-2
+  #profile: eb_cli
+  sc: git
+  workspace_type: Application
