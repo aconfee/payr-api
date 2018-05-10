@@ -1,15 +1,11 @@
 import Dependent from './models/dependent.model';
 import Employee from './models/employee.model';
 import BenefitsPackage from './models/benefitsPackage.model';
-import BenefitsDiscount from './models/benefitsDiscount.model'
-import DependentDao from '../data/dependent.dao';
-import BenefitsPackageDao from '../data/benefitsPackage.dao';
-import PayrollInfoDao from '../data/payrollInfo.dao';
 import Bluebird from 'bluebird'; // Promise library for Sequelize
-import _ from 'lodash';
 import Sequelize from 'sequelize';
 import DiscountsService from './discounts.service';
-const Op = Sequelize.Op;
+import isNull from 'lodash/isNull';
+import isUndefined from 'lodash/isUndefined';
 
 
 export interface IBenefitsService {
@@ -48,7 +44,7 @@ class BenefitsService implements IBenefitsService {
         const dependentRows: any = await this.dependentDao.findAll({ where: {employeeId: employeeId }})
             .catch((e) => { console.error(e); });
 
-        if(_.isNull(dependentRows) || _.isUndefined(dependentRows)){
+        if(isNull(dependentRows) || isUndefined(dependentRows)){
             return null;
         }
 
@@ -74,7 +70,7 @@ class BenefitsService implements IBenefitsService {
         const payrollInfoRow: any = await this.payrollInfoDao.findOne({ where: {employeeId: employeeId }})
             .catch((e) => { console.error(e); });
 
-        if(_.isNull(payrollInfoRow) || _.isUndefined(payrollInfoRow)){
+        if(isNull(payrollInfoRow) || isUndefined(payrollInfoRow)){
             return null;
         }
 
@@ -83,7 +79,7 @@ class BenefitsService implements IBenefitsService {
         const benefitsPackageRow: any = await this.benefitsPackageDao.findOne({ where: {id: benefitsPackageId }})
             .catch((e) => { console.error(e); });
 
-        if(_.isNull(benefitsPackageRow) || _.isUndefined(benefitsPackageRow)){
+        if(isNull(benefitsPackageRow) || isUndefined(benefitsPackageRow)){
             return null;
         }   
 
@@ -103,16 +99,17 @@ class BenefitsService implements IBenefitsService {
      * @returns A final calculation of the total annual cost of benefits for the provided employee.
      */
     public getTotalAnnualCost = async (employee: Employee): Promise<number> => {
-        const benefitsPackage: any = await this.getEmployeeBenefitsPackage(employee.id);
+        const benefitsPackage: any = await this.getEmployeeBenefitsPackage(employee.id)
+            .catch((e) => { console.error(e); });
 
-        var baseCost = benefitsPackage.baseCost;
-        baseCost = this.discountsService.applyBenefitsDiscounts(employee, baseCost);
+        const baseCost = this.discountsService.applyBenefitsDiscounts(employee, benefitsPackage.baseCost);
 
-        const dependentCost = benefitsPackage.dependentCost;
-        const dependents: any = await this.getEmployeeDependents(employee.id);
+        const dependents: any = await this.getEmployeeDependents(employee.id)
+            .catch((e) => { console.error(e); });
+            
         var dependentsCost = 0.0;
         dependents.forEach((dependent) => {
-            dependentsCost += this.discountsService.applyBenefitsDiscounts(dependent, dependentCost);
+            dependentsCost += this.discountsService.applyBenefitsDiscounts(dependent, benefitsPackage.dependentCost);
         });
 
         return baseCost + dependentsCost;

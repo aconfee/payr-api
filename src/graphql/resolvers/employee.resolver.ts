@@ -1,42 +1,22 @@
-// //import { IDummyService } from "../../services/dummy.service";
-// //import Dummy from '../../services/models/dummy.model';
+import { IBenefitsService } from '../../services/benefits.service';
+import { IEmployeeService } from '../../services/employee.service';
+import { IDiscountsService } from '../../services/discounts.service';
 
-// const employeeResolver = (/*service: IEmployeeService*/): any => {
 
-//     return {
-//         Query: {
-//             employees(): any {
-//                 return [
-//                     {
-//                         id: '1',
-//                         firstname: 'Adam',
-//                         lastname: 'Estela',
-//                         salary: 52000,
-//                         totalAnnualCost: 2250,
-//                         paycheckDeduction: 86.54,
-//                         discounts: ["10% Discount - Name Begins With Letter 'A'"],
-//                         dependents: [
-//                             { id: '1', name: 'Kim Greenough' },
-//                             { id: '2', name: 'Uma the Skish' }
-//                         ]
-//                     },
-//                     {
-//                         id: '2',
-//                         firstname: 'Kim',
-//                         lastname: 'Greenough',
-//                         salary: 52000,
-//                         totalAnnualCost: 2000,
-//                         paycheckDeduction: 76.92,
-//                         discounts: [],
-//                         dependents: [
-//                             { id: '1', name: 'Max the Bear' }
-//                         ]
-//                     }
-//                 ];
-//             }
-//         }
-//     };
+const employeeResolver = (
+    benefitsService: IBenefitsService, 
+    employeeService: IEmployeeService,
+    discountsService: IDiscountsService): any => {
 
-// }
+    return {
+        Employee: {
+            dependents: (employee): any => { return benefitsService.getEmployeeDependents(employee.id); },
+            payrollInfo: (employee): any => { return employeeService.getEmployeePayrollInfo(employee.id); },
+            benefitsDiscounts: (employee): any => { return discountsService.getAllEligableBenefitsDiscounts(employee).map(discount => discount.name); },
+            benefitsTotalAnnualCost: async (employee): Promise<any> => { return benefitsService.getTotalAnnualCost(employee); }
+        }
+    };
 
-// export default employeeResolver;
+}
+
+export default employeeResolver;
