@@ -1,11 +1,11 @@
 const employeeTypedef = `
 type Employee {
-  id: String!
+  id: Int!
   firstname: String!
   lastname: String!
   payrollInfo: PayrollInfo
   benefitsTotalAnnualCost: Float
-  benefitsDiscounts: [BenefitsDiscount]
+  benefitsDiscounts: [String]
   dependents: [Dependent]
 }
 `;

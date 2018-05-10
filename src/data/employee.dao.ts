@@ -2,8 +2,6 @@ import Sequelize from 'sequelize';
 import sequelize from './dbContext';
 import PayrollInfoDao from './payrollInfo.dao';
 import DependentDao from './dependent.dao';
-import BenefitsDiscountsDao from './benefitsDiscount.dao';
-import EmployeeBenefitsDiscountDao from './employeeBenefitsDiscount.dao';
 
 const EmployeeDao = sequelize.define('employee', {
     id: { 

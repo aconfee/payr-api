@@ -1,4 +1,5 @@
 import Dependent from './models/dependent.model';
+import Employee from './models/employee.model';
 import BenefitsPackage from './models/benefitsPackage.model';
 import BenefitsDiscount from './models/benefitsDiscount.model'
 import DependentDao from '../data/dependent.dao';
@@ -7,13 +8,14 @@ import PayrollInfoDao from '../data/payrollInfo.dao';
 import Bluebird from 'bluebird'; // Promise library for Sequelize
 import _ from 'lodash';
 import Sequelize from 'sequelize';
+import DiscountsService from './discounts.service';
 const Op = Sequelize.Op;
 
 
 export interface IBenefitsService {
     getEmployeeDependents(employeeId: number): Bluebird<void | Dependent[]>;
     getEmployeeBenefitsPackage(employeeId: number): Bluebird<void | BenefitsPackage>;
-    getEmployeeBenefitsDiscounts(employeeId: number): Bluebird<void | BenefitsDiscount[]>;
+    getTotalAnnualCost(employee: Employee): Promise<number>;
 };
 
 class BenefitsService implements IBenefitsService {
@@ -21,25 +23,26 @@ class BenefitsService implements IBenefitsService {
     private dependentDao: Sequelize.Model<{}, {}> = null;
     private payrollInfoDao: Sequelize.Model<{}, {}> = null;
     private benefitsPackageDao: Sequelize.Model<{}, {}> = null;
-    private employeeBenefitsDiscountDao: Sequelize.Model<{}, {}> = null;
-    private benefitsDiscountDao: Sequelize.Model<{}, {}> = null;
+    private discountsService: DiscountsService = null;
 
     constructor(
         dependentDao: Sequelize.Model<{}, {}>,
         payrollInfoDao: Sequelize.Model<{}, {}>,
         benefitsPackageDao: Sequelize.Model<{}, {}>,
-        employeeBenefitsDiscountDao: Sequelize.Model<{}, {}>,
-        benefitsDiscountDao: Sequelize.Model<{}, {}>
+        discountsService: DiscountsService
     ) {
         this.dependentDao = dependentDao;
         this.payrollInfoDao = payrollInfoDao;
         this.benefitsPackageDao = benefitsPackageDao;
-        this.employeeBenefitsDiscountDao = employeeBenefitsDiscountDao;
-        this.benefitsDiscountDao = benefitsDiscountDao;
+        this.discountsService = discountsService;
     };
 
     /**
      * Get the dependents for the provided employee id.
+     * 
+     * @param employeeId The employee whose dependents we will retrieve.
+     * 
+     * @returns A list of dependents belonging to the employee with the provided id. 
      */
     public getEmployeeDependents = async (employeeId: number): Bluebird<Dependent[]> => {
         const dependentRows: any = await this.dependentDao.findAll({ where: {employeeId: employeeId }})
@@ -62,6 +65,10 @@ class BenefitsService implements IBenefitsService {
 
     /**
      * Get the benefits package that the provided employee is enroleld in.
+     * 
+     * @param employeeId The employee whose benefits package we will retrieve.
+     * 
+     * @returns The benefits package that the employee with the provided id is enrolled in.
      */
     public getEmployeeBenefitsPackage = async(employeeId: number): Bluebird<void | BenefitsPackage> => {
         const payrollInfoRow: any = await this.payrollInfoDao.findOne({ where: {employeeId: employeeId }})
@@ -88,31 +95,27 @@ class BenefitsService implements IBenefitsService {
     };
 
     /**
-     * Get any discounts that are associated with this employee.
+     * Gets the total, final annual cost of benefits for an employee. Considers dependents
+     * and discounts.
+     * 
+     * @param employee The employee whose total benefits cost we will calculate.
+     * 
+     * @returns A final calculation of the total annual cost of benefits for the provided employee.
      */
-    public getEmployeeBenefitsDiscounts = async(employeeId: number): Bluebird<void | BenefitsDiscount[]> => {
-        const employeeDiscountRows: any = await this.employeeBenefitsDiscountDao.findAll({ where: {employeeId: employeeId }})
-            .catch((e) => { console.error(e); });
+    public getTotalAnnualCost = async (employee: Employee): Promise<number> => {
+        const benefitsPackage: any = await this.getEmployeeBenefitsPackage(employee.id);
 
-        if(_.isNull(employeeDiscountRows) || _.isUndefined(employeeDiscountRows) || _.isEmpty(employeeDiscountRows)){
-            return null;
-        }
+        var baseCost = benefitsPackage.baseCost;
+        baseCost = this.discountsService.applyBenefitsDiscounts(employee, baseCost);
 
-        const discountIds = employeeDiscountRows.map((discountRow: any) => {
-            return discountRow.get('benefitsdiscountId');
+        const dependentCost = benefitsPackage.dependentCost;
+        const dependents: any = await this.getEmployeeDependents(employee.id);
+        var dependentsCost = 0.0;
+        dependents.forEach((dependent) => {
+            dependentsCost += this.discountsService.applyBenefitsDiscounts(dependent, dependentCost);
         });
 
-        const discountRows: any = await this.benefitsDiscountDao.findAll({where: { id: {[Op.or]: discountIds }}})
-            .catch((e) => { console.error(e); });
-
-        const discounts = discountRows.map((discountRow) => {
-            return new BenefitsDiscount(
-                discountRow.get('name'),
-                discountRow.get('discountPercent')
-            );
-        });
-
-        return discounts;
+        return baseCost + dependentsCost;
     };
 
 };
