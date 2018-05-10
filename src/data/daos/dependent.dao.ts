@@ -1,16 +1,19 @@
 import Sequelize from 'sequelize';
-import sequelize from './dbContext';
-import PayrollInfoDao from './payrollInfo.dao';
-import DependentDao from './dependent.dao';
+import sequelize from '../dbContext';
+import EmployeeDao from './employee.dao';
 
-const EmployeeDao = sequelize.define('employee', {
+const DependentDao = sequelize.define('dependent', {
     id: { 
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
         allowNull: false
     },
-    firstname: { 
+    employeeId: { 
+        type: Sequelize.INTEGER,
+        allowNull: false
+    },
+    firstname: {
         type: Sequelize.STRING,
         defaultValue: null
     },
@@ -20,4 +23,4 @@ const EmployeeDao = sequelize.define('employee', {
     }
 });
 
-export default EmployeeDao;
+export default DependentDao;

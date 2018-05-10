@@ -1,10 +1,10 @@
 /**
  * This file is basically DI for all the services and resolvers.
  */
-import EmployeeDao from '../data/employee.dao';
-import PayrollInfoDao from '../data/payrollInfo.dao';
-import DependentDao from '../data/dependent.dao';
-import BenefitsPackageDao from '../data/benefitsPackage.dao';
+import EmployeeDao from '../data/daos/employee.dao';
+import PayrollInfoDao from '../data/daos/payrollInfo.dao';
+import DependentDao from '../data/daos/dependent.dao';
+import BenefitsPackageDao from '../data/daos/benefitsPackage.dao';
 
 import DiscountsService from '../services/discounts.service';
 import EmployeeService from '../services/employee.service';

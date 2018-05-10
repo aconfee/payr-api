@@ -1,5 +1,5 @@
 import Sequelize from 'sequelize';
-import sequelize from './dbContext';
+import sequelize from '../dbContext';
 import PayrollInfoDao from './payrollInfo.dao';
 
 const BenefitsPackageDao = sequelize.define('benefitspackage', {
