@@ -7,7 +7,8 @@ const DependentDao = sequelize.define('dependent', {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     employeeId: { 
         type: Sequelize.INTEGER,
@@ -15,11 +16,11 @@ const DependentDao = sequelize.define('dependent', {
     },
     firstname: {
         type: Sequelize.STRING,
-        defaultValue: null
+        allowNull: false
     },
     lastname: {
         type: Sequelize.STRING,
-        defaultValue: null
+        allowNull: false
     }
 });
 

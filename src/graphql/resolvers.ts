@@ -1,6 +1,7 @@
 /**
  * This file is basically DI for all the services and resolvers.
  */
+// TODO: use sequelize.import() to cache.
 import EmployeeDao from '../data/daos/employee.dao';
 import PayrollInfoDao from '../data/daos/payrollInfo.dao';
 import DependentDao from '../data/daos/dependent.dao';

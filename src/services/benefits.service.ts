@@ -1,7 +1,20 @@
+/**
+ * TODO: Question
+ * Right now, there's not a *clear* place to do biz logic. Service seems like a mix 
+ * of querying and mapping to biz logic objects, and actual biz logic functions. 
+ * 
+ * I've seen the command handler pattern used in such a way that handlers consume services
+ * and all the logic is contained to handlers while queries are handled in services. This bloats
+ * really fast though (if truly proper cmd handler pattern is in place).
+ * 
+ * What are other options for separating queries/mapping from logic (logic that consumes and uses
+ * the resulting objects of those queries and returns a 'VM').
+ */
+
 import Dependent from './models/dependent.model';
 import Employee from './models/employee.model';
 import BenefitsPackage from './models/benefitsPackage.model';
-import Bluebird from 'bluebird'; // Promise library for Sequelize
+import Bluebird from 'bluebird'; 
 import Sequelize from 'sequelize';
 import DiscountsService from './discounts.service';
 import isNull from 'lodash/isNull';
@@ -41,8 +54,11 @@ class BenefitsService implements IBenefitsService {
      * @returns A list of dependents belonging to the employee with the provided id. 
      */
     public getEmployeeDependents = async (employeeId: number): Bluebird<Dependent[]> => {
-        const dependentRows: any = await this.dependentDao.findAll({ where: {employeeId: employeeId }})
-            .catch((e) => { console.error(e); });
+        const dependentRows: any = await this.dependentDao.findAll({ 
+            where: {employeeId: employeeId },
+            attributes: ['id', 'firstname', 'lastname']
+        })
+        .catch((e) => { console.error(e); });
 
         if(isNull(dependentRows) || isUndefined(dependentRows)){
             return null;
@@ -67,17 +83,21 @@ class BenefitsService implements IBenefitsService {
      * @returns The benefits package that the employee with the provided id is enrolled in.
      */
     public getEmployeeBenefitsPackage = async(employeeId: number): Bluebird<void | BenefitsPackage> => {
-        const payrollInfoRow: any = await this.payrollInfoDao.findOne({ where: {employeeId: employeeId }})
-            .catch((e) => { console.error(e); });
+        const payrollInfoRow: any = await this.payrollInfoDao.findOne({ 
+            where: { employeeId: employeeId },
+            attributes: ['benefitsPackageId']
+        })
+        .catch((e) => { console.error(e); });
 
         if(isNull(payrollInfoRow) || isUndefined(payrollInfoRow)){
             return null;
         }
 
-        const benefitsPackageId = payrollInfoRow.get('benefitsPackageId');
-
-        const benefitsPackageRow: any = await this.benefitsPackageDao.findOne({ where: {id: benefitsPackageId }})
-            .catch((e) => { console.error(e); });
+        const benefitsPackageRow: any = await this.benefitsPackageDao.findOne({ 
+            where: { id: payrollInfoRow.get('benefitsPackageId') },
+            attributes: ['name', 'baseCost', 'dependentCost']
+        })
+        .catch((e) => { console.error(e); });
 
         if(isNull(benefitsPackageRow) || isUndefined(benefitsPackageRow)){
             return null;

@@ -1,17 +1,18 @@
 import Sequelize from 'sequelize';
 import sequelize from '../dbContext';
-import EmployeeDao from './employee.dao';
 
 const PayrollInfoDao = sequelize.define('payrollinfo', {
     id: { 
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     employeeId: { 
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     salary: {
         type: Sequelize.FLOAT,

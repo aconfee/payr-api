@@ -9,7 +9,7 @@ export interface IEmployeeService {
     getEmployees(): Bluebird<void | Employee[]>;
     getEmployeePayrollInfo(employeeId: number): Bluebird<PayrollInfo>;
     addEmployee(firstname: string, lastname: string): Bluebird<{}>;
-    removeEmployee(id: number): Bluebird<{}>;
+    removeEmployee(id: number): Bluebird<number | void>;
 };
 
 class EmployeeService implements IEmployeeService {
@@ -33,8 +33,10 @@ class EmployeeService implements IEmployeeService {
      * @returns All employees in the DB 
      */
     public getEmployees = async (): Bluebird<void | Employee[]> => {
-        const employeeRows: any = await this.employeeDao.findAll()
-            .catch((e) => { console.error(e); });
+        const employeeRows: any = await this.employeeDao.findAll({
+            attributes: ['id', 'firstname', 'lastname']
+        })
+        .catch((e) => { console.error(e); });
 
         if(isNull(employeeRows) || isUndefined(employeeRows)){
             return null;
@@ -59,8 +61,11 @@ class EmployeeService implements IEmployeeService {
      * @returns The payroll info associated with the provided employee. 
      */
     public getEmployeePayrollInfo = async (employeeId: number): Bluebird<PayrollInfo> => {
-        const payrollInfoRow: any = await this.payrollInfoDao.findOne({ where: {employeeId: employeeId }})
-            .catch((e) => { console.error(e); });
+        const payrollInfoRow: any = await this.payrollInfoDao.findOne({ 
+            where: {employeeId: employeeId },
+            attributes: ['salary', 'paychecksPerYear']
+        })
+        .catch((e) => { console.error(e); });
 
         if(isNull(payrollInfoRow) || isUndefined(payrollInfoRow)){
             return null;
@@ -103,16 +108,9 @@ class EmployeeService implements IEmployeeService {
      * 
      * @returns true if the employee and its related table columns are successfully destroyed.
      */
-    public removeEmployee = async (id: number): Bluebird<{}> => {
-        const employeeDeleteResult: any = await this.employeeDao.destroy({ where: { id: id }})
+    public removeEmployee = (id: number): Bluebird<number | void> => {
+        return this.employeeDao.destroy({ where: { id: id }})
             .catch((e) => { console.error(e); });
-
-        const payrollDeleteResult: any = await this.payrollInfoDao.destroy({ where: { employeeId: id }})
-            .catch((e) => { console.error(e); });
-
-        if(employeeDeleteResult + payrollDeleteResult !== 2) return false;
-
-        return true;
     };
 
 };

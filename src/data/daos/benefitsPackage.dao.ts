@@ -7,11 +7,13 @@ const BenefitsPackageDao = sequelize.define('benefitspackage', {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     name: {
         type: Sequelize.STRING,
-        defaultValue: null
+        allowNull: false,
+        unique: true
     },
     baseCost: {
         type: Sequelize.FLOAT,

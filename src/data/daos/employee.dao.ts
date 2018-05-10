@@ -8,16 +8,25 @@ const EmployeeDao = sequelize.define('employee', {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     firstname: { 
         type: Sequelize.STRING,
-        defaultValue: null
+        allowNull: false
     },
     lastname: {
         type: Sequelize.STRING,
-        defaultValue: null
+        allowNull: false
     }
 });
+
+// Employee has one payroll info.
+// TODO: hasOne or belongsTo here? FK on source or target? What's the implication?
+EmployeeDao.hasOne(PayrollInfoDao, { foreignKey: 'employeeId' });
+
+// Employee has many dependents. Each dependent belongs to one employee.
+EmployeeDao.hasMany(DependentDao, { foreignKey: 'employeeId' });
+DependentDao.belongsTo(EmployeeDao, { foreignKey: 'employeeId' });
 
 export default EmployeeDao;
