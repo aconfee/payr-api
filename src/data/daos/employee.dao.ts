@@ -10,9 +10,9 @@ import isNull from 'lodash/isNull';
 import isUndefined from 'lodash/isUndefined';
 
 export interface IEmployeeDao {
-    findAll(): Bluebird<Employee[]>
-    create(firstname: string, lastname: string): Bluebird<Employee>
-    destroyById(id: number): Bluebird<boolean>
+    findAll(): Bluebird<Employee[]>;
+    create(firstname: string, lastname: string): Bluebird<Employee>;
+    destroyById(id: number): Bluebird<boolean>;
 };
 
 class EmployeeDao implements IEmployeeDao {

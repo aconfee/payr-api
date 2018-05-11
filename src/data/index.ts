@@ -28,4 +28,13 @@ const db = {
     sequelize
 };
 
+// RESET APP
+// sequelize.sync({force: true}).then(() => {
+//     BenefitsPackageSchema.create({
+//         name: 'Default Company Benefits',
+//         baseCost: 1000,
+//         dependentCost: 500
+//     });
+// });
+
 export default db;

@@ -25,7 +25,7 @@ const employeeService = new EmployeeService(employeeDao, payrollInfoDao);
 const benefitsService = new BenefitsService(dependetDao, payrollInfoDao, benefitsPackageDao, discountsService);
 
 var resolvers = Object.assign({}, queryResolver(employeeService));
-resolvers = Object.assign(resolvers, mutationResolver(employeeService));
+resolvers = Object.assign(resolvers, mutationResolver(employeeService, benefitsService));
 resolvers = Object.assign(resolvers, employeeResolver(benefitsService, employeeService, discountsService))
 
 export default resolvers;
