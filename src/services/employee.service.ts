@@ -1,25 +1,26 @@
+import { IEmployeeDao } from '../data/daos/employee.dao';
+import { IPayrollInfoDao } from '../data/daos/payrollInfo.dao';
 import Employee from './models/employee.model';
 import PayrollInfo from './models/payrollInfo.model';
 import Bluebird from 'bluebird'; // Promise library for Sequelize
-import Sequelize from 'sequelize';
 import isNull from 'lodash/isNull';
 import isUndefined from 'lodash/isUndefined';
 
 export interface IEmployeeService {
-    getEmployees(): Bluebird<void | Employee[]>;
+    getEmployees(): Bluebird<Employee[]>;
     getEmployeePayrollInfo(employeeId: number): Bluebird<PayrollInfo>;
-    addEmployee(firstname: string, lastname: string): Bluebird<{}>;
-    removeEmployee(id: number): Bluebird<number | void>;
+    addEmployee(firstname: string, lastname: string): Bluebird<Employee>;
+    removeEmployee(id: number): Bluebird<boolean>;
 };
 
 class EmployeeService implements IEmployeeService {
 
-    private employeeDao: Sequelize.Model<{}, {}> = null;
-    private payrollInfoDao: Sequelize.Model<{}, {}> = null;
+    private employeeDao: IEmployeeDao = null;
+    private payrollInfoDao: IPayrollInfoDao = null;
 
     constructor(
-        employeeDao: Sequelize.Model<{}, {}>,
-        payrollInfoDao: Sequelize.Model<{}, {}>
+        employeeDao: IEmployeeDao,
+        payrollInfoDao: IPayrollInfoDao,
     ) {
         this.employeeDao = employeeDao;
         this.payrollInfoDao = payrollInfoDao;
@@ -32,25 +33,8 @@ class EmployeeService implements IEmployeeService {
      * 
      * @returns All employees in the DB 
      */
-    public getEmployees = async (): Bluebird<void | Employee[]> => {
-        const employeeRows: any = await this.employeeDao.findAll({
-            attributes: ['id', 'firstname', 'lastname']
-        })
-        .catch((e) => { console.error(e); });
-
-        if(isNull(employeeRows) || isUndefined(employeeRows)){
-            return null;
-        }
-
-        const employees = employeeRows.map((employeeRow) => {
-            return new Employee(
-                employeeRow.get('id'),
-                employeeRow.get('firstname'), 
-                employeeRow.get('lastname')
-            );
-        });
-
-        return employees;
+    public getEmployees = (): Bluebird<Employee[]> => {
+        return this.employeeDao.findAll();
     };
 
     /**
@@ -61,20 +45,11 @@ class EmployeeService implements IEmployeeService {
      * @returns The payroll info associated with the provided employee. 
      */
     public getEmployeePayrollInfo = async (employeeId: number): Bluebird<PayrollInfo> => {
-        const payrollInfoRow: any = await this.payrollInfoDao.findOne({ 
-            where: {employeeId: employeeId },
-            attributes: ['salary', 'paychecksPerYear']
-        })
-        .catch((e) => { console.error(e); });
+        const payrollInfo = await this.payrollInfoDao.findOneByEmployeeId(employeeId, ['salary', 'paychecksPerYear']);
 
-        if(isNull(payrollInfoRow) || isUndefined(payrollInfoRow)){
-            return null;
-        }
+        if(isNull(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}.`);
 
-        return new PayrollInfo(
-            payrollInfoRow.get('salary'), 
-            payrollInfoRow.get('paychecksPerYear')
-        );
+        return payrollInfo;
     };
 
     /**
@@ -85,18 +60,19 @@ class EmployeeService implements IEmployeeService {
      * 
      * @returns A promise for the newly created object.
      */
-    public addEmployee = async (firstname: string, lastname: string): Bluebird<{}> => {
-        const newEmployee: any = await this.employeeDao.create({
-            firstname: firstname,
-            lastname: lastname
-        }).catch((e) => { console.error(e); });
+    public addEmployee = async (firstname: string, lastname: string): Bluebird<Employee> => {
+        const newEmployee: any = await this.employeeDao.create(firstname, lastname);
+
+        if(isNull(newEmployee)) throw Error(`Could not create or find employee ${firstname} ${lastname}.`);
 
         // In this contrived example, all employees have the same salary and benefits package. But this is easily extensible. 
-        this.payrollInfoDao.create({
-            salary: 52000,
-            benefitsPackageId: 1,
-            employeeId: newEmployee.id
-        });
+        const newPayrollInfo = await this.payrollInfoDao.create(52000, newEmployee.id, 1);
+
+        if(isNull(newPayrollInfo))
+        { 
+            this.employeeDao.destroyById(newEmployee.id);
+            throw Error(`Could not create payroll info during creation of employee ${newEmployee}. Rolling back employee creation.`);
+        }
 
         return newEmployee;
     };
@@ -108,9 +84,12 @@ class EmployeeService implements IEmployeeService {
      * 
      * @returns true if the employee and its related table columns are successfully destroyed.
      */
-    public removeEmployee = (id: number): Bluebird<number | void> => {
-        return this.employeeDao.destroy({ where: { id: id }})
-            .catch((e) => { console.error(e); });
+    public removeEmployee = async (id: number): Bluebird<boolean> => {
+        const deleted: boolean = await this.employeeDao.destroyById(id);
+
+        if(!deleted) throw Error(`Could not delete employee with id: ${id}.`);
+
+        return deleted;
     };
 
 };
