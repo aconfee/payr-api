@@ -11,6 +11,7 @@ export interface IEmployeeService {
     getEmployeePayrollInfo(employeeId: number): Bluebird<PayrollInfo>;
     addEmployee(firstname: string, lastname: string): Bluebird<Employee>;
     removeEmployee(id: number): Bluebird<boolean>;
+    getEmployee(id: number): Bluebird<Employee>;
 };
 
 class EmployeeService implements IEmployeeService {
@@ -35,6 +36,17 @@ class EmployeeService implements IEmployeeService {
      */
     public getEmployees = (): Bluebird<Employee[]> => {
         return this.employeeDao.findAll();
+    };
+
+    /**
+     * Get an employee by id.
+     * 
+     * @param id of the employee to get.
+     * 
+     * @returns The employee corresponding to the provided id.
+     */
+    public getEmployee = (id: number): Bluebird<Employee> => {
+        return this.employeeDao.findById(id);
     };
 
     /**

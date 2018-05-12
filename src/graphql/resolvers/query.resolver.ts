@@ -5,7 +5,8 @@ const queryResolver = (employeeService: IEmployeeService): any => {
 
     return {
         Query: {
-            employees: (): any => { return employeeService.getEmployees(); }
+            employees: (): any => { return employeeService.getEmployees(); },
+            employee: (root, args): any => { return employeeService.getEmployee(args.id); }
         },
     };
 

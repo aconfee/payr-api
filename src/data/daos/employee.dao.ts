@@ -13,6 +13,7 @@ export interface IEmployeeDao {
     findAll(): Bluebird<Employee[]>;
     create(firstname: string, lastname: string): Bluebird<Employee>;
     destroyById(id: number): Bluebird<boolean>;
+    findById(id): Bluebird<Employee>;
 };
 
 class EmployeeDao implements IEmployeeDao {
@@ -39,6 +40,28 @@ class EmployeeDao implements IEmployeeDao {
         });
 
         return employees;
+    };
+
+    /**
+     * Get an employee by id.
+     * 
+     * @param id of the employee to get.s
+     */
+    public findById = async (id): Bluebird<Employee> => {
+        const row: any = await db.EmployeeSchema.findById(id, {
+            attributes: ['id', 'firstname', 'lastname']
+        })
+        .catch((e) => { console.error(e); });
+
+        if(isNull(row) || isUndefined(row)){
+            return null;
+        }
+
+        return new Employee(
+            row.id,
+            row.firstname, 
+            row.lastname
+        );
     };
 
     /**
