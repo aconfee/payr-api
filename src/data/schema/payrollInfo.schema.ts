@@ -16,11 +16,19 @@ const PayrollInfoSchema = sequelize.define('payrollinfo', {
     },
     salary: {
         type: Sequelize.FLOAT,
-        defaultValue: null
+        defaultValue: null,
+        validate: {
+            min: 0,
+            max: 9999999
+        }
     },
     paychecksPerYear: {
         type: Sequelize.INTEGER,
-        defaultValue: 26
+        defaultValue: 26,
+        validate: {
+            min: 0,
+            max: 52
+        }
     },
     benefitsPackageId: {
         type: Sequelize.INTEGER,

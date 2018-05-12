@@ -58,7 +58,7 @@ class DiscountsService implements IDiscountsService {
      * @returns True or false if the provided person meets the criteria for this discount.
      */
     private discountNameStartsWithACriteria = (person: Employee | Dependent): boolean => { 
-        return person && person.firstname && person.firstname.length > 1 && person.firstname.toLowerCase()[0] === 'a';
+        return person && person.firstname && person.firstname.length > 0 && person.firstname.toLowerCase()[0] === 'a';
     };
 
     /**

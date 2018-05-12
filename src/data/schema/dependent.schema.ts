@@ -16,11 +16,21 @@ const DependentSchema = sequelize.define('dependent', {
     },
     firstname: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+            isAlpha: true,
+            notEmpty: true,
+            len: [1, 50]
+        }
     },
     lastname: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+            isAlpha: true,
+            notEmpty: true,
+            len: [1, 50]
+        }
     }
 });
 

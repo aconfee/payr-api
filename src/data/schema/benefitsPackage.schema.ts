@@ -13,15 +13,28 @@ const BenefitsPackageSchema = sequelize.define('benefitspackage', {
     name: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true
+        unique: true,
+        validate: {
+            isAlphanumeric: true,
+            notEmpty: true,
+            len: [1, 200]
+        }
     },
     baseCost: {
         type: Sequelize.FLOAT,
-        allowNull: false
+        allowNull: false,
+        validate: {
+            min: 0,
+            max: 9999999
+        }
     },
     dependentCost: {
         type: Sequelize.FLOAT,
-        allowNull: false
+        allowNull: false,
+        validate: {
+            min: 0,
+            max: 9999999
+        }
     }
 });
 
