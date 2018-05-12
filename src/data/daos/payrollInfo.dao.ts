@@ -1,48 +1,69 @@
 import db from '../index';
 import Bluebird from 'bluebird';
+import IDao, { QueryOptions } from './IDao.dao';
 import PayrollInfo from '../../services/models/payrollInfo.model';
-import isNull from 'lodash/isNull';
-import isUndefined from 'lodash/isUndefined';
+import isNil from 'lodash/isNil';
 
 export interface IPayrollInfoDao {
-    findOneByEmployeeId(employeeId: number, attributes: string[]): Bluebird<PayrollInfo>
-    create(salary: number, employeeId: number, benefitsPackageId: number): Bluebird<PayrollInfo>
+    findOne(options?: QueryOptions): Bluebird<PayrollInfo>;
+    create(record: PayrollInfo): Bluebird<PayrollInfo>;
 };
 
-class PayrollInfoDao implements IPayrollInfoDao {
+class PayrollInfoDao implements IPayrollInfoDao, IDao {
 
-    /**
-     * TODO: This is a bit lazy. In real life, I'd make my own query objects that could be used from the 
-     * services/biz layer instead of making a method for every case I have. On the other hand... this does 
-     * allow me to more tightly control what functionality is exposed / needed by the application, and no more.
-     * Keeps people from shooting themselves in the foot, or doing things that shouldn't be possible. 
-     * 
+    public findById(id: number, options?: QueryOptions): Bluebird<PayrollInfo>{
+        throw Error('Not implemented.');
+    }; 
+
+    public findAll(options?: QueryOptions): Bluebird<PayrollInfo[]>{
+        throw Error('Not implemented.');
+    };
+
+    /** 
      * Get the payroll information for the provided employee.
+     *
+     * @param options can specify query options like WHERE criteria and attributes to SELECT.
+     * 
+     * @returns one payroll info that match the query criteria.
      */
-    public findOneByEmployeeId = async (employeeId: number, attributes: string[]): Bluebird<PayrollInfo> => {
+    public findOne = async (options?: QueryOptions): Bluebird<PayrollInfo> => {
         const payrollInfoRow: any = await db.PayrollInfoSchema.findOne({ 
-            where: {employeeId: employeeId },
-            attributes: attributes
+            where: options.where,
+            attributes: options.attributes
         })
         .catch((e) => { console.error(e); });
 
-        if(isNull(payrollInfoRow) || isUndefined(payrollInfoRow)){
-            return null;
-        }
+        if(isNil(payrollInfoRow)) return null;
 
         return new PayrollInfo(
+            payrollInfoRow.employeeId,
             payrollInfoRow.salary, 
             payrollInfoRow.paychecksPerYear,
             payrollInfoRow.benefitsPackageId
         );
     };
 
-    public create = async (salary: number, employeeId: number, benefitsPackageId: number): Bluebird<PayrollInfo> => {
+    /**
+     * Create a payroll info.
+     * 
+     * @param record model of the payroll info to create.
+     * 
+     * @returns the newly created, or null.
+     */
+    public create = async (record: PayrollInfo): Bluebird<PayrollInfo> => {
+        const { employeeId, benefitsPackageId, salary } = record;
+        const error = isNil(employeeId) || isNil(salary);
+        if(error) throw Error(`Can't create payroll info. Missing information. ${record}.`);
+
         const result: any = await db.PayrollInfoSchema.create({ salary, employeeId, benefitsPackageId: benefitsPackageId });
 
-        if(isNull(result.id) || isUndefined(result.id)) return null;
+        if(isNil(result.id)) return null;
 
         return new PayrollInfo(result.salary, result.paychecksPerYear);
+    };
+
+    public destroy(id: number): Bluebird<boolean> {
+        throw Error('Not implemented.');
     };
 };
 

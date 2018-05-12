@@ -6,9 +6,8 @@ import { IDiscountsService } from './discounts.service';
 import { IPayrollInfoDao } from '../data/daos/payrollInfo.dao';
 import { IBenefitsPackageDao } from '../data/daos/benefitsPackage.dao';
 import { IDependentDao } from '../data/daos/dependent.dao';
-import isNull from 'lodash/isNull';
-import isUndefined from 'lodash/isUndefined';
-
+import { QueryOptions } from '../data/daos/IDao.dao';
+import isNil from 'lodash/isNull';
 
 export interface IBenefitsService {
     getEmployeeDependents(employeeId: number): Bluebird<void | Dependent[]>;
@@ -45,7 +44,10 @@ class BenefitsService implements IBenefitsService {
      * @returns A list of dependents belonging to the employee with the provided id. 
      */
     public getEmployeeDependents = async (employeeId: number): Bluebird<Dependent[]> => {
-        return this.dependentDao.findAllByEmployeeId(employeeId, ['id', 'firstname', 'lastname']);
+        return this.dependentDao.findAll(new QueryOptions(
+            { employeeId: employeeId }, 
+            ['id', 'firstname', 'lastname'])
+        );
     };
 
     /**
@@ -58,9 +60,11 @@ class BenefitsService implements IBenefitsService {
      * @returns The newly created dependent.
      */
     public addEmployeeDependent = async (employeeId: number, firstname: string, lastname: string): Bluebird<Dependent> => {
-        const newDependent = await this.dependentDao.create(employeeId, firstname, lastname);
+        const newDependent = await this.dependentDao.create(
+            new Dependent(null, employeeId, firstname.trim(), lastname.trim())
+        );
 
-        if(isNull(newDependent)) throw Error(`Could not create or dependent ${firstname} ${lastname}.`);
+        if(isNil(newDependent)) throw Error(`Could not create or dependent ${firstname} ${lastname}.`);
 
         return newDependent;
     };
@@ -73,7 +77,7 @@ class BenefitsService implements IBenefitsService {
      * @returns whether or not the record was successfully removed.
      */
     public removeEmployeeDependent = async (id: number): Bluebird<boolean> => {
-         const deleted: boolean = await this.dependentDao.destroyById(id);
+         const deleted: boolean = await this.dependentDao.destroy(id);
 
         if(!deleted) throw Error(`Could not delete dependent with id: ${id}.`);
 
@@ -88,11 +92,16 @@ class BenefitsService implements IBenefitsService {
      * @returns The benefits package that the employee with the provided id is enrolled in.
      */
     public getEmployeeBenefitsPackage = async(employeeId: number): Bluebird<void | BenefitsPackage> => {
-        const payrollInfo = await this.payrollInfoDao.findOneByEmployeeId(employeeId, ['benefitsPackageId']);
+        const payrollInfo = await this.payrollInfoDao.findOne(
+            new QueryOptions({ employeeId }, ['benefitsPackageId'])
+        );
 
-        if(isNull(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}.`);
+        if(isNil(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}.`);
 
-        return this.benefitsPackageDao.findOneById(payrollInfo.benefitsPackageId, ['name', 'baseCost', 'dependentCost']);
+        return this.benefitsPackageDao.findById(
+            payrollInfo.benefitsPackageId,
+            new QueryOptions(null, ['name', 'baseCost', 'dependentCost'])
+        );
     };
 
     /**

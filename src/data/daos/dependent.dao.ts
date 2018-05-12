@@ -1,31 +1,41 @@
 import db from '../index';
 import Bluebird from 'bluebird';
 import Dependent from '../../services/models/dependent.model';
-import isNull from 'lodash/isNull';
-import isUndefined from 'lodash/isUndefined';
+import isNil from 'lodash/isNil';
+import IDao, { QueryOptions } from './IDao.dao';
 
 export interface IDependentDao {
-    findAllByEmployeeId(employeeId: number, attributes: string[]): Bluebird<Dependent[]>;
-    create(employeeId: number, firstname: string, lastname: string): Bluebird<Dependent>;
-    destroyById(id: number): Bluebird<boolean>;
+    findAll(options?: QueryOptions): Bluebird<Dependent[]>;
+    create(record: Dependent): Bluebird<Dependent>
+    destroy(id: number): Bluebird<boolean>;
 };
 
-class DependentDao implements IDependentDao {
+class DependentDao implements IDependentDao, IDao {
 
-    public findAllByEmployeeId = async (employeeId: number, attributes: string[]): Bluebird<Dependent[]> => {
+    public findById(id: number, options?: QueryOptions): Bluebird<Dependent>{
+        throw Error('Not implemented.');
+    }; 
+
+    /**
+     * Find all dependents. 
+     * 
+     * @param options can specify query options like WHERE criteria and attributes to SELECT.
+     * 
+     * @returns the list of dependents that match the query criteria.
+     */
+    public findAll = async (options?: QueryOptions): Bluebird<Dependent[]> => {
         const dependentRows: any = await db.DependentSchema.findAll({ 
-            where: { employeeId },
-            attributes
+            where: options.where,
+            attributes: options.attributes
         })
         .catch((e) => { console.error(e); });
 
-        if(isNull(dependentRows) || isUndefined(dependentRows)){
-            return null;
-        }
+        if(isNil(dependentRows)) return null;
 
         const dependents = dependentRows.map((dependentRow) => {
             return new Dependent(
                 dependentRow.id,
+                dependentRow.employeeId,
                 dependentRow.firstname, 
                 dependentRow.lastname
             );
@@ -34,21 +44,27 @@ class DependentDao implements IDependentDao {
         return dependents;
     };
 
+    public findOne(options?: QueryOptions): Bluebird<Dependent>{
+        throw Error('Not implemented.');
+    };
+
     /**
      * Create a dependent.
      * 
-     * @param employeeId Id of the employee that this dependent belongs to.
-     * @param firstname of the dependent that will be created.
-     * @param lastname of the dependent that will be created.
+     * @param record a model of the record to create.
      * 
      * @returns the newly created dependent.
      */
-    public create = async (employeeId: number, firstname: string, lastname: string): Bluebird<Dependent> => {
+    public create = async (record: Dependent): Bluebird<Dependent> => {
+        const { employeeId, firstname, lastname } = record;
+        const error = isNil(employeeId) || isNil(firstname) || isNil(lastname);
+        if(error) throw Error(`Can't create dependent. Missing information. ${record}.`);
+
         const result: any = await db.DependentSchema.create({ employeeId, firstname, lastname });
 
-        if(isNull(result.id) || isUndefined(result.id)) return null;
+        if(isNil(result.id)) return null;
 
-        return new Dependent(result.id, result.firstname, result.lastname);
+        return new Dependent(result.id, result.employeeId, result.firstname, result.lastname);
     };
 
     /**
@@ -58,7 +74,7 @@ class DependentDao implements IDependentDao {
      * 
      * @returns whether or not the entry was deleted.
      */
-    public destroyById = async (id: number): Bluebird<boolean> => {
+    public destroy = async (id: number): Bluebird<boolean> => {
         const deleted = await db.DependentSchema.destroy({ where: { id: id }})
             .catch((e) => { console.error(e); });
 

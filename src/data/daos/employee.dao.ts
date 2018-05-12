@@ -1,35 +1,56 @@
-/**
- * These daos decouple Sequelize from the rest of the app. I could, for example,
- * swap out Sequelize with Knex and these dao classes are the only things that would have to be updated.
- */
-
 import db from '../index';
 import Bluebird from 'bluebird';
+import IDao, { QueryOptions } from './IDao.dao';
 import Employee from '../../services/models/employee.model';
-import isNull from 'lodash/isNull';
-import isUndefined from 'lodash/isUndefined';
+import isNil from 'lodash/isNil';
 
 export interface IEmployeeDao {
-    findAll(): Bluebird<Employee[]>;
-    create(firstname: string, lastname: string): Bluebird<Employee>;
-    destroyById(id: number): Bluebird<boolean>;
-    findById(id): Bluebird<Employee>;
+    findById(id: number, options?: QueryOptions): Bluebird<Employee>;
+    findAll(options?: QueryOptions): Bluebird<Employee[]>;
+    create(record: Employee): Bluebird<Employee>;
+    destroy(id: number): Bluebird<boolean>;
 };
 
-class EmployeeDao implements IEmployeeDao {
+class EmployeeDao implements IEmployeeDao, IDao {
 
     /**
-     * Get all employees and map to model.
+     * Get an employee by id.
+     * 
+     * @param id of the employee to get.
+     * @param options can specify query options like attributes to SELECT.
+     * 
+     * @returns the employee that was found (or null).
      */
-    public findAll = async (): Bluebird<Employee[]> => {
-        const rows: any = await db.EmployeeSchema.findAll({
-            attributes: ['id', 'firstname', 'lastname']
+    public findById = async (id: number, options?: QueryOptions): Bluebird<Employee> => {
+        const row: any = await db.EmployeeSchema.findById(id, {
+            attributes: options.attributes
         })
         .catch((e) => { console.error(e); });
 
-        if(isNull(rows) || isUndefined(rows)){
-            return null;
-        }
+        if(isNil(row)) return null;
+
+        return new Employee(
+            row.id,
+            row.firstname,
+            row.lastname
+        );
+    };
+
+    /**
+     * Get all employees and map to model.
+     * 
+     * @param options can specify query options like WHERE criteria and attributes to SELECT.
+     * 
+     * @returns all of the employees that match the query criteria.
+     */
+    public findAll = async (options?: QueryOptions): Bluebird<Employee[]> => {
+        const rows: any = await db.EmployeeSchema.findAll({
+            where: options.where,
+            attributes: options.attributes
+        })
+        .catch((e) => { console.error(e); });
+
+        if(isNil(rows)) return null;
 
         const employees = rows.map((row: any) => {
             return new Employee(
@@ -42,40 +63,25 @@ class EmployeeDao implements IEmployeeDao {
         return employees;
     };
 
-    /**
-     * Get an employee by id.
-     * 
-     * @param id of the employee to get.s
-     */
-    public findById = async (id): Bluebird<Employee> => {
-        const row: any = await db.EmployeeSchema.findById(id, {
-            attributes: ['id', 'firstname', 'lastname']
-        })
-        .catch((e) => { console.error(e); });
-
-        if(isNull(row) || isUndefined(row)){
-            return null;
-        }
-
-        return new Employee(
-            row.id,
-            row.firstname, 
-            row.lastname
-        );
+    public findOne(options?: QueryOptions): Bluebird<Employee>{
+        throw Error('Not implemented.');
     };
 
     /**
-     * Create an employee (or return an existing one that matches criteria).
+     * Create an employee.
      * 
-     * @param firstname of the employee that will be created.
-     * @param lastname of the employee that will be created.
+     * @param record model of the employee to create.
      * 
-     * @returns the newly created, or existing and found employee.
+     * @returns the newly created, or null.
      */
-    public create = async (firstname: string, lastname: string): Bluebird<Employee> => {
+    public create = async (record: Employee): Bluebird<Employee> => {
+        const { firstname, lastname } = record;
+        const error = isNil(firstname) || isNil(lastname);
+        if(error) throw Error(`Can't create employee. Missing information. ${record}.`);
+
         const result: any = await db.EmployeeSchema.create({ firstname, lastname });
 
-        if(isNull(result.id) || isUndefined(result.id)) return null;
+        if(isNil(result.id)) return null;
 
         return new Employee(result.id, result.firstname, result.lastname);
     };
@@ -87,7 +93,7 @@ class EmployeeDao implements IEmployeeDao {
      * 
      * @returns whether or not the entry was deleted.
      */
-    public destroyById = async (id: number): Bluebird<boolean> => {
+    public destroy = async (id: number): Bluebird<boolean> => {
         const deleted = await db.EmployeeSchema.destroy({ where: { id: id }})
             .catch((e) => { console.error(e); });
 
