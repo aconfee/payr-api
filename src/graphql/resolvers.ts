@@ -2,14 +2,14 @@
  * This file is basically DI for all the services and resolvers.
  */
 
-import EmployeeDao from '../data/daos/employee.dao';
-import PayrollInfoDao from '../data/daos/payrollInfo.dao';
-import BenefitsPackageDao from '../data/daos/benefitsPackage.dao';
-import DependentDao from '../data/daos/dependent.dao';
+import EmployeeDao from '../data/daos/payroll/employee.dao';
+import PayrollInfoDao from '../data/daos/payroll/payrollInfo.dao';
+import BenefitsPackageDao from '../data/daos/benefits/benefitsPackage.dao';
+import DependentDao from '../data/daos/benefits/dependent.dao';
 
-import DiscountsService from '../services/discounts.service';
-import EmployeeService from '../services/employee.service';
-import BenefitsService from '../services/benefits.service';
+import DiscountsService from '../business/services/benefits/discounts.service';
+import EmployeeService from '../business/services/payroll/employee.service';
+import BenefitsService from '../business/services/benefits/benefits.service';
 
 import queryResolver from './resolvers/query.resolver';
 import mutationResolver from './resolvers/mutation.resolver';

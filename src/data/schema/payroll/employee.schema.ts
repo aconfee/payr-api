@@ -1,8 +1,8 @@
 import Sequelize from 'sequelize';
-import sequelize from '../dbContext';
-import EmployeeSchema from './employee.schema';
+import sequelize from '../../dbContext';
+import PayrollInfoDao from './payrollInfo.schema';
 
-const DependentSchema = sequelize.define('dependent', {
+const EmployeeSchema = sequelize.define('employee', {
     id: { 
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -10,11 +10,7 @@ const DependentSchema = sequelize.define('dependent', {
         allowNull: false,
         unique: true
     },
-    employeeId: { 
-        type: Sequelize.INTEGER,
-        allowNull: false
-    },
-    firstname: {
+    firstname: { 
         type: Sequelize.STRING,
         allowNull: false,
         validate: {
@@ -34,4 +30,4 @@ const DependentSchema = sequelize.define('dependent', {
     }
 });
 
-export default DependentSchema;
+export default EmployeeSchema;

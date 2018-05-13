@@ -1,21 +1,21 @@
-import db from '../index';
+import db from '../../index';
 import Bluebird from 'bluebird';
-import IDao, { QueryOptions } from './IDao.dao';
-import PayrollInfo from '../../services/models/payrollInfo.model';
+import IDao, { QueryOptions } from '../IDao.dao';
+import PayrollInfoDM from '../../models/payroll/payrollInfo.datamodel';
 import isNil from 'lodash/isNil';
 
 export interface IPayrollInfoDao {
-    findOne(options?: QueryOptions): Bluebird<PayrollInfo>;
-    create(record: PayrollInfo): Bluebird<PayrollInfo>;
+    findOne(options?: QueryOptions): Bluebird<PayrollInfoDM>;
+    create(record: PayrollInfoDM): Bluebird<PayrollInfoDM>;
 };
 
 class PayrollInfoDao implements IPayrollInfoDao, IDao {
 
-    public findById(id: number, options?: QueryOptions): Bluebird<PayrollInfo>{
+    public findById(id: number, options?: QueryOptions): Bluebird<PayrollInfoDM>{
         throw Error('Not implemented.');
     }; 
 
-    public findAll(options?: QueryOptions): Bluebird<PayrollInfo[]>{
+    public findAll(options?: QueryOptions): Bluebird<PayrollInfoDM[]>{
         throw Error('Not implemented.');
     };
 
@@ -26,20 +26,23 @@ class PayrollInfoDao implements IPayrollInfoDao, IDao {
      * 
      * @returns one payroll info that match the query criteria.
      */
-    public findOne = async (options?: QueryOptions): Bluebird<PayrollInfo> => {
-        const payrollInfoRow: any = await db.PayrollInfoSchema.findOne({ 
+    public findOne = async (options?: QueryOptions): Bluebird<PayrollInfoDM> => {
+        const row: any = await db.PayrollInfoSchema.findOne({ 
             where: options.where,
             attributes: options.attributes
         })
         .catch((e) => { console.error(e); });
 
-        if(isNil(payrollInfoRow)) return null;
+        if(isNil(row)) return null;
 
-        return new PayrollInfo(
-            payrollInfoRow.employeeId,
-            payrollInfoRow.salary, 
-            payrollInfoRow.paychecksPerYear,
-            payrollInfoRow.benefitsPackageId
+        return new PayrollInfoDM(
+            row.id,
+            row.employeeId,
+            row.salary, 
+            row.paychecksPerYear,
+            row.benefitsPackageId,
+            row.createdAt,
+            row.updatedAt
         );
     };
 
@@ -50,7 +53,7 @@ class PayrollInfoDao implements IPayrollInfoDao, IDao {
      * 
      * @returns the newly created, or null.
      */
-    public create = async (record: PayrollInfo): Bluebird<PayrollInfo> => {
+    public create = async (record: PayrollInfoDM): Bluebird<PayrollInfoDM> => {
         const { employeeId, benefitsPackageId, salary } = record;
         const error = isNil(employeeId) || isNil(salary);
         if(error) throw Error(`Can't create payroll info. Missing information. ${record}.`);
@@ -59,7 +62,15 @@ class PayrollInfoDao implements IPayrollInfoDao, IDao {
 
         if(isNil(result.id)) return null;
 
-        return new PayrollInfo(result.salary, result.paychecksPerYear);
+        return new PayrollInfoDM(
+            result.id,
+            result.employeeId,
+            result.salary, 
+            result.paychecksPerYear,
+            result.benefitsPackageId,
+            result.createdAt,
+            result.UpdatedAt
+        );
     };
 
     public destroy(id: number): Bluebird<boolean> {

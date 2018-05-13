@@ -5,10 +5,10 @@
  */
 
 import sequelize from './dbContext';
-import EmployeeSchema from './schema/employee.schema';
-import PayrollInfoSchema from './schema/payrollInfo.schema';
-import BenefitsPackageSchema from './schema/benefitsPackage.schema';
-import DependentSchema from './schema/dependent.schema';
+import EmployeeSchema from './schema/payroll/employee.schema';
+import PayrollInfoSchema from './schema/payroll/payrollInfo.schema';
+import BenefitsPackageSchema from './schema/benefits/benefitsPackage.schema';
+import DependentSchema from './schema/benefits/dependent.schema';
 
 EmployeeSchema.hasOne(PayrollInfoSchema, { foreignKey: 'employeeId', onUpdate: 'CASCADE', onDelete: 'CASCADE' });
 PayrollInfoSchema.belongsTo(EmployeeSchema); // Just for ORM relational methods.
@@ -27,6 +27,8 @@ const db = {
     DependentSchema,
     sequelize
 };
+
+DependentSchema.create({ employeeId: 2, firstname: 'hi', lastname: 'there' });
 
 // RESET APP
 // sequelize.sync({force: true}).then(() => {

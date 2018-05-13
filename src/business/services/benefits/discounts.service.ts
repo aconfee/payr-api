@@ -1,6 +1,7 @@
-import Employee from './models/employee.model';
-import Dependent from './models/dependent.model';
-import BenefitsDiscount from './models/benefitsDiscount.model';
+import Employee from '../../contracts/payroll/employee';
+import Dependent from '../../contracts/benefits/dependent';
+import BenefitsDiscount from '../../contracts/benefits/benefitsDiscount';
+import isNil from 'lodash/isNil';
 
 export interface IDiscountsService {
     applyBenefitsDiscounts(person: Employee | Dependent, cost: number): number;
@@ -20,9 +21,9 @@ class DiscountsService implements IDiscountsService {
      * @returns The new cost after all eligable discounts are applied.
      */
     public applyBenefitsDiscounts = (person: Employee | Dependent, cost: number): number => {
-        const discounts = this.getAllEligableBenefitsDiscounts(person);
+        const discounts: BenefitsDiscount[] = this.getAllEligableBenefitsDiscounts(person);
         var totalDiscountPercent = 0.0;
-        discounts.forEach((discount) => {
+        discounts.forEach((discount: BenefitsDiscount) => {
             totalDiscountPercent += discount.discountPercent;
         });
 
@@ -43,28 +44,27 @@ class DiscountsService implements IDiscountsService {
     public getAllEligableBenefitsDiscounts = (person: Employee | Dependent): BenefitsDiscount[] => {
         var allDiscounts: BenefitsDiscount[] = [];
 
-        if(this.discountNameStartsWithACriteria(person)) allDiscounts = allDiscounts.concat(this.discountNameStartsWithA);
+        this.DISCOUNTS.forEach((discount) => {
+            if(discount.criteria(person)) {
+                allDiscounts.push(discount.discountObject);
+            }
+        });
 
         return allDiscounts;
     };
 
     /**
-     * Checks eligability for discount rule: 10% off if firstname begins with letter A. 
-     * 
-     * This rule is eligable for employees and dependents as indicated by accepted types.
-     * 
-     * @param person The person to check eligability against for this discount's criteria. 
-     * 
-     * @returns True or false if the provided person meets the criteria for this discount.
+     * All discounts. Each discount object has a criteria function that evaluates true or false, and the actual discount object to return
+     * to the employee if eligable.
      */
-    private discountNameStartsWithACriteria = (person: Employee | Dependent): boolean => { 
-        return person && person.firstname && person.firstname.length > 0 && person.firstname.toLowerCase()[0] === 'a';
-    };
-
-    /**
-     * Discounts details
-     */
-    private discountNameStartsWithA = new BenefitsDiscount('10% Off - Firstname starts with the letter A', 0.1);
+    private readonly DISCOUNTS = [
+        {
+            criteria: (person: Employee | Dependent): boolean => { 
+                return !isNil(person) && !isNil(person.firstname) && person.firstname.length > 0 && person.firstname.toLowerCase()[0] === 'a';
+            },
+            discountObject: new BenefitsDiscount('10% Off - Firstname starts with the letter A', 0.1)
+        }
+    ]
 
 };
 

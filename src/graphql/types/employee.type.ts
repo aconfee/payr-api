@@ -3,7 +3,7 @@ type Employee {
   id: Int!
   firstname: String!
   lastname: String!
-  payrollInfo: PayrollInfo
+  payrollInfo: PayrollInfo!
   benefitsTotalAnnualCost: Float
   benefitsDiscounts: [String]
   dependents: [Dependent]

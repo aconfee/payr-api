@@ -1,18 +1,22 @@
-import Dependent from './models/dependent.model';
-import Employee from './models/employee.model';
-import BenefitsPackage from './models/benefitsPackage.model';
+import Dependent from '../../contracts/benefits/dependent';
+import BenefitsPackage from '../../contracts/benefits/benefitsPackage';
+import Employee from '../../contracts/payroll/employee';
+import DependentDM from '../../../data/models/benefits/dependent.datamodel';
+import BenefitsPackageDM from '../../../data/models/benefits/benefitsPackage.datamodel';
+import EmployeeDM from '../../../data/models/payroll/employee.datamodel';
+import PayrollInfoDM from '../../../data/models/payroll/payrollInfo.datamodel';
 import Bluebird from 'bluebird'; 
 import { IDiscountsService } from './discounts.service';
-import { IPayrollInfoDao } from '../data/daos/payrollInfo.dao';
-import { IBenefitsPackageDao } from '../data/daos/benefitsPackage.dao';
-import { IDependentDao } from '../data/daos/dependent.dao';
-import { QueryOptions } from '../data/daos/IDao.dao';
+import { IPayrollInfoDao } from '../../../data/daos/payroll/payrollInfo.dao';
+import { IBenefitsPackageDao } from '../../../data/daos/benefits/benefitsPackage.dao';
+import { IDependentDao } from '../../../data/daos/benefits/dependent.dao';
+import { QueryOptions } from '../../../data/daos/IDao.dao';
 import isNil from 'lodash/isNull';
 
 export interface IBenefitsService {
-    getEmployeeDependents(employeeId: number): Bluebird<void | Dependent[]>;
-    getEmployeeBenefitsPackage(employeeId: number): Bluebird<void | BenefitsPackage>;
-    getTotalAnnualCost(employee: Employee): Promise<number>;
+    getEmployeeDependents(employeeId: number): Bluebird<Dependent[]>;
+    getEmployeeBenefitsPackage(employeeId: number): Bluebird<BenefitsPackage>;
+    getTotalAnnualCost(employee: Employee): Bluebird<number>;
     addEmployeeDependent(employeeId: number, firstname: string, lastname: string): Bluebird<Dependent>;
     removeEmployeeDependent(id: number): Bluebird<boolean>;
 };
@@ -44,10 +48,21 @@ class BenefitsService implements IBenefitsService {
      * @returns A list of dependents belonging to the employee with the provided id. 
      */
     public getEmployeeDependents = async (employeeId: number): Bluebird<Dependent[]> => {
-        return this.dependentDao.findAll(new QueryOptions(
+        const dependents: DependentDM[] = await this.dependentDao.findAll(new QueryOptions(
             { employeeId: employeeId }, 
             ['id', 'firstname', 'lastname'])
         );
+
+        if(isNil(dependents)) return [];
+
+        return dependents.map((dependent: DependentDM) => {
+            return new Dependent(
+                dependent.id,
+                dependent.employeeId,
+                dependent.firstname,
+                dependent.lastname
+            );
+        });
     };
 
     /**
@@ -60,13 +75,18 @@ class BenefitsService implements IBenefitsService {
      * @returns The newly created dependent.
      */
     public addEmployeeDependent = async (employeeId: number, firstname: string, lastname: string): Bluebird<Dependent> => {
-        const newDependent = await this.dependentDao.create(
-            new Dependent(null, employeeId, firstname.trim(), lastname.trim())
+        const newDependent: DependentDM = await this.dependentDao.create(
+            new DependentDM(null, employeeId, firstname.trim(), lastname.trim())
         );
 
-        if(isNil(newDependent)) throw Error(`Could not create or dependent ${firstname} ${lastname}.`);
+        if(isNil(newDependent)) return null;
 
-        return newDependent;
+        return new Dependent(
+            newDependent.id,
+            newDependent.employeeId,
+            newDependent.firstname,
+            newDependent.lastname
+        );
     };
 
     /**
@@ -79,8 +99,6 @@ class BenefitsService implements IBenefitsService {
     public removeEmployeeDependent = async (id: number): Bluebird<boolean> => {
          const deleted: boolean = await this.dependentDao.destroy(id);
 
-        if(!deleted) throw Error(`Could not delete dependent with id: ${id}.`);
-
         return deleted;
     };
 
@@ -91,16 +109,24 @@ class BenefitsService implements IBenefitsService {
      * 
      * @returns The benefits package that the employee with the provided id is enrolled in.
      */
-    public getEmployeeBenefitsPackage = async(employeeId: number): Bluebird<void | BenefitsPackage> => {
-        const payrollInfo = await this.payrollInfoDao.findOne(
+    public getEmployeeBenefitsPackage = async (employeeId: number): Bluebird<BenefitsPackage> => {
+        const payrollInfo: PayrollInfoDM = await this.payrollInfoDao.findOne(
             new QueryOptions({ employeeId }, ['benefitsPackageId'])
         );
 
-        if(isNil(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}.`);
+        if(isNil(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}. Therefore can't find benefits package.`);
 
-        return this.benefitsPackageDao.findById(
+        const benefitsPackage: BenefitsPackageDM = await this.benefitsPackageDao.findById(
             payrollInfo.benefitsPackageId,
             new QueryOptions(null, ['name', 'baseCost', 'dependentCost'])
+        );
+
+        if(isNil(benefitsPackage)) return null;
+
+        return new BenefitsPackage(
+            benefitsPackage.name,
+            benefitsPackage.baseCost,
+            benefitsPackage.dependentCost
         );
     };
 
@@ -112,17 +138,19 @@ class BenefitsService implements IBenefitsService {
      * 
      * @returns A final calculation of the total annual cost of benefits for the provided employee.
      */
-    public getTotalAnnualCost = async (employee: Employee): Promise<number> => {
-        const benefitsPackage: any = await this.getEmployeeBenefitsPackage(employee.id)
-            .catch((e) => { console.error(e); });
+    public getTotalAnnualCost = async (employee: Employee): Bluebird<number> => {
+        const benefitsPackage: BenefitsPackage = await this.getEmployeeBenefitsPackage(employee.id);
 
-        const baseCost = this.discountsService.applyBenefitsDiscounts(employee, benefitsPackage.baseCost);
+        if(isNil(benefitsPackage)) {
+            console.error(`Could not find benefits package for employee ${employee}.`);
+            return null;
+        }
 
-        const dependents: any = await this.getEmployeeDependents(employee.id)
-            .catch((e) => { console.error(e); });
+        const baseCost: number = this.discountsService.applyBenefitsDiscounts(employee, benefitsPackage.baseCost);
+        const dependents: Dependent[] = await this.getEmployeeDependents(employee.id);
             
-        var dependentsCost = 0.0;
-        dependents.forEach((dependent) => {
+        let dependentsCost = 0.0;
+        dependents.forEach((dependent: Dependent) => {
             dependentsCost += this.discountsService.applyBenefitsDiscounts(dependent, benefitsPackage.dependentCost);
         });
 

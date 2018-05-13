@@ -1,6 +1,5 @@
 import Sequelize from 'sequelize';
-import sequelize from '../dbContext';
-import PayrollInfoSchema from './payrollInfo.schema';
+import sequelize from '../../dbContext';
 
 const BenefitsPackageSchema = sequelize.define('benefitspackage', {
     id: { 

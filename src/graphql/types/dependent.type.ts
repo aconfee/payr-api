@@ -1,9 +1,8 @@
 const dependentTypedef = `
 type Dependent {
-  id: String!
+  id: Int!
   firstname: String!
   lastname: String!
-  employeeId: String
 }
 `;
 
