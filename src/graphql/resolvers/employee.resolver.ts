@@ -6,6 +6,7 @@ import DependentVM from '../models/benefits/dependent.viewmodel';
 import PayrollInfo from '../../business/contracts/payroll/payrollInfo';
 import PayrollInfoVM from '../models/payroll/payrollInfo.viewmodel';
 import BenefitsDiscount from '../../business/contracts/benefits/benefitsDiscount';
+import Employee from '../../business/contracts/payroll/employee';
 import Bluebird from 'bluebird';
 import isNull from 'lodash/isNull';
 
@@ -21,6 +22,7 @@ const employeeResolver = (
         return dependents.map((dependent: Dependent) => {
             return new DependentVM(
                 dependent.id,
+                dependent.employeeId,
                 dependent.firstname,
                 dependent.lastname
             );
@@ -46,7 +48,7 @@ const employeeResolver = (
     };
 
     const getBenefitsTotalAnnualCost = async (employee): Bluebird<number> => { 
-        const totalCost = await benefitsService.getTotalAnnualCost(employee); 
+        const totalCost = await benefitsService.getTotalAnnualCost(new Employee(employee.id, employee.firstname, employee.lastname)); 
 
         if(isNull(totalCost)) throw Error(`Could not calculate total cost for employee ${employee}. See logs for more details.`);
 

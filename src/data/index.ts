@@ -28,8 +28,6 @@ const db = {
     sequelize
 };
 
-DependentSchema.create({ employeeId: 2, firstname: 'hi', lastname: 'there' });
-
 // RESET APP
 // sequelize.sync({force: true}).then(() => {
 //     BenefitsPackageSchema.create({

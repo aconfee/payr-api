@@ -1,4 +1,4 @@
-class BenefitsDiscount {
+export default class BenefitsDiscount {
     constructor(name?: string, discountPercent?: number) {
         this.name = name;
         this.discountPercent = discountPercent;
@@ -6,6 +6,4 @@ class BenefitsDiscount {
 
     public name: string;
     public discountPercent: number; 
-}
-
-export default BenefitsDiscount;
+};

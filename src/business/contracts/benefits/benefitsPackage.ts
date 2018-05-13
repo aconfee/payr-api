@@ -1,4 +1,4 @@
-class BenefitsPackage {
+export default class BenefitsPackage {
     constructor(name?: string, baseCost?: number, dependentCost?: number) {
         this.name = name;
         this.baseCost = baseCost;
@@ -8,6 +8,4 @@ class BenefitsPackage {
     public name: string;
     public baseCost: number; 
     public dependentCost: number;
-}
-
-export default BenefitsPackage;
+};

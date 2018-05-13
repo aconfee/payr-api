@@ -1,4 +1,4 @@
-class Employee {
+export default class Employee {
     constructor(id?: number, firstname?: string, lastname?: string) {
         this.id = id;
         this.firstname = firstname;
@@ -8,6 +8,4 @@ class Employee {
     public id: number;
     public firstname: string;
     public lastname: string; 
-}
-
-export default Employee;
+};

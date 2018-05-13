@@ -1,4 +1,4 @@
-class Dependent {
+export default class Dependent {
     constructor(id?: number, employeeId?: number, firstname?: string, lastname?: string) {
         this.id = id;
         this.employeeId = employeeId;
@@ -10,6 +10,4 @@ class Dependent {
     public employeeId: number;
     public firstname: string;
     public lastname: string; 
-}
-
-export default Dependent;
+};

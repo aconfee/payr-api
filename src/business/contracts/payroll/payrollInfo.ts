@@ -1,4 +1,4 @@
-class PayrollInfo {
+export default class PayrollInfo {
     constructor(employeeId?: number, salary?: number, paychecksPerYear?: number, benefitsPackageId?: number) {
         this.employeeId = employeeId;
         this.salary = salary;
@@ -10,6 +10,4 @@ class PayrollInfo {
     public salary: number;
     public paychecksPerYear: number; 
     public benefitsPackageId: number;
-}
-
-export default PayrollInfo;
+};

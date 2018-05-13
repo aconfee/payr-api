@@ -16,6 +16,7 @@ import isNil from 'lodash/isNull';
 export interface IBenefitsService {
     getEmployeeDependents(employeeId: number): Bluebird<Dependent[]>;
     getEmployeeBenefitsPackage(employeeId: number): Bluebird<BenefitsPackage>;
+    getDependentAddonCost(dependent: Dependent): Bluebird<number>;
     getTotalAnnualCost(employee: Employee): Bluebird<number>;
     addEmployeeDependent(employeeId: number, firstname: string, lastname: string): Bluebird<Dependent>;
     removeEmployeeDependent(id: number): Bluebird<boolean>;
@@ -50,7 +51,7 @@ class BenefitsService implements IBenefitsService {
     public getEmployeeDependents = async (employeeId: number): Bluebird<Dependent[]> => {
         const dependents: DependentDM[] = await this.dependentDao.findAll(new QueryOptions(
             { employeeId: employeeId }, 
-            ['id', 'firstname', 'lastname'])
+            ['id', 'employeeId', 'firstname', 'lastname'])
         );
 
         if(isNil(dependents)) return [];
@@ -129,6 +130,24 @@ class BenefitsService implements IBenefitsService {
             benefitsPackage.dependentCost
         );
     };
+
+    /**
+     * Get the addon cost for a dependent.
+     * 
+     * @param dependent to calculate addon cost for.
+     * 
+     * @returns the total cost of this dependent considering the owning employees benefits plan and any eligable discounts.
+     */
+    public getDependentAddonCost = async (dependent: Dependent): Bluebird<number> => {
+        const benefitsPackage: BenefitsPackage = await this.getEmployeeBenefitsPackage(dependent.employeeId);
+
+        if(isNil(benefitsPackage)) throw Error(`Could not find benefits package for employee ${dependent.employeeId}.`);
+
+        let addonCost: number = benefitsPackage.dependentCost;
+        addonCost = this.discountsService.applyBenefitsDiscounts(dependent, addonCost);
+        
+        return addonCost;
+    }
 
     /**
      * Gets the total, final annual cost of benefits for an employee. Considers dependents

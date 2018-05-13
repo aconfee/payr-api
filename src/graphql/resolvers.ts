@@ -14,6 +14,7 @@ import BenefitsService from '../business/services/benefits/benefits.service';
 import queryResolver from './resolvers/query.resolver';
 import mutationResolver from './resolvers/mutation.resolver';
 import employeeResolver from './resolvers/employee.resolver';
+import dependentResolver from './resolvers/dependent.resolver';
 
 const employeeDao = new EmployeeDao();
 const payrollInfoDao = new PayrollInfoDao();
@@ -26,6 +27,7 @@ const benefitsService = new BenefitsService(dependetDao, payrollInfoDao, benefit
 
 var resolvers = Object.assign({}, queryResolver(employeeService));
 resolvers = Object.assign(resolvers, mutationResolver(employeeService, benefitsService));
-resolvers = Object.assign(resolvers, employeeResolver(benefitsService, employeeService, discountsService))
+resolvers = Object.assign(resolvers, employeeResolver(benefitsService, employeeService, discountsService));
+resolvers = Object.assign(resolvers, dependentResolver(benefitsService, discountsService));
 
 export default resolvers;
