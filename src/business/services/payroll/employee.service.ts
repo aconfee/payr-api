@@ -42,11 +42,7 @@ class EmployeeService implements IEmployeeService {
         if(isNil(employees)) return [];
         
         return employees.map((employee: EmployeeDM) => {
-            return new Employee(
-                employee.id,
-                employee.firstname,
-                employee.lastname
-            )
+            return employee.toContract();
         });
     };
 
@@ -58,6 +54,8 @@ class EmployeeService implements IEmployeeService {
      * @returns The employee corresponding to the provided id.
      */
     public getEmployee = async (id: number): Bluebird<Employee> => {
+        if(isNil(id) || id < 0) throw Error('Please provide a valid id.');
+
         const employee: EmployeeDM = await this.employeeDao.findById(
             id,
             new QueryOptions(null, ['id', 'firstname', 'lastname'])
@@ -65,11 +63,7 @@ class EmployeeService implements IEmployeeService {
 
         if(isNil(employee)) return null;
 
-        return new Employee(
-            employee.id,
-            employee.firstname,
-            employee.lastname
-        );
+        return employee.toContract();
     };
 
     /**
@@ -80,6 +74,8 @@ class EmployeeService implements IEmployeeService {
      * @returns The payroll info associated with the provided employee. 
      */
     public getEmployeePayrollInfo = async (employeeId: number): Bluebird<PayrollInfo> => {
+        if(isNil(employeeId) || employeeId < 0) throw Error('Please provide a valid id.');
+
         const payrollInfo: PayrollInfoDM = await this.payrollInfoDao.findOne(
             new QueryOptions({ employeeId }, ['salary', 'paychecksPerYear'])
         );
@@ -103,6 +99,9 @@ class EmployeeService implements IEmployeeService {
      * @returns A promise for the newly created object.
      */
     public addEmployee = async (firstname: string, lastname: string): Bluebird<Employee> => {
+        if(isNil(firstname) || firstname.trim().length <= 0) throw Error('Please provide a valid first name.');
+        if(isNil(lastname) || lastname.trim().length <= 0) throw Error('Please provide a valid last name.');
+
         const newEmployee: EmployeeDM = await this.employeeDao.create(new EmployeeDM(null, firstname.trim(), lastname.trim()));
 
         if(isNil(newEmployee)) return null;
@@ -116,11 +115,7 @@ class EmployeeService implements IEmployeeService {
             throw Error(`Could not create payroll info during creation of employee ${newEmployee}. Rolling back employee creation.`);
         }
 
-        return new Employee(
-            newEmployee.id,
-            newEmployee.firstname,
-            newEmployee.lastname
-        );
+        return newEmployee.toContract();
     };
 
     /**
@@ -131,6 +126,8 @@ class EmployeeService implements IEmployeeService {
      * @returns true if the employee and its related table columns are successfully destroyed.
      */
     public removeEmployee = async (id: number): Bluebird<boolean> => {
+        if(isNil(id) || id < 0) throw Error('Please provide a valid id.');
+
         const deleted: boolean = await this.employeeDao.destroy(id);
 
         return deleted;

@@ -1,4 +1,7 @@
-export default class EmployeeVM {
+import IViewModel from '../IViewModel.viewmodel';
+import Employee from '../../../business/contracts/payroll/employee';
+
+export default class EmployeeVM implements IViewModel {
     constructor(
         id?: number, 
         firstname?: string, 
@@ -12,4 +15,12 @@ export default class EmployeeVM {
     public id: number;
     public firstname: string;
     public lastname: string; 
+
+    public toContract(): Employee {
+        return new Employee(
+            this.id,
+            this.firstname,
+            this.lastname
+        );
+    };
 };

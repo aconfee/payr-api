@@ -1,4 +1,8 @@
-export default class PayrollInfoDM {
+import IDataModel from '../IDataModel.datamodel';
+import IContract from '../../../business/contracts/payroll/payrollInfo';
+import PayrollInfo from '../../../business/contracts/payroll/payrollInfo';
+
+export default class PayrollInfoDM implements IDataModel {
     constructor(
         id?: number,
         employeeId?: number, 
@@ -24,4 +28,13 @@ export default class PayrollInfoDM {
     public benefitsPackageId: number;
     public createdAt: Date;
     public updatedAt: Date;
+
+    public toContract(): PayrollInfo {
+        return new PayrollInfo(
+            this.employeeId,
+            this.salary,
+            this.paychecksPerYear,
+            this.benefitsPackageId
+        );
+    };
 };

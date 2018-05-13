@@ -1,4 +1,7 @@
-export default class BenefitsPackageDM {
+import IDataModel from '../IDataModel.datamodel';
+import BenefitsPackage from '../../../business/contracts/benefits/benefitsPackage';
+
+export default class BenefitsPackageDM implements IDataModel {
     constructor(
         id?: number, 
         name?: string, 
@@ -21,4 +24,12 @@ export default class BenefitsPackageDM {
     public dependentCost: number;
     public createdAt: Date;
     public updatedAt: Date;
+
+    public toContract(): BenefitsPackage {
+        return new BenefitsPackage(
+            this.name,
+            this.baseCost,
+            this.dependentCost
+        );
+    };
 };

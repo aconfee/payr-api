@@ -1,4 +1,7 @@
-export default class EmployeeDM {
+import IDataModel from '../IDataModel.datamodel';
+import Employee from '../../../business/contracts/payroll/employee';
+
+export default class EmployeeDM implements IDataModel {
     constructor(
         id?: number, 
         firstname?: string, 
@@ -18,4 +21,12 @@ export default class EmployeeDM {
     public lastname: string; 
     public createdAt: Date;
     public updatedAt: Date;
+
+    public toContract(): Employee {
+        return new Employee(
+            this.id,
+            this.firstname,
+            this.lastname
+        );
+    };
 };

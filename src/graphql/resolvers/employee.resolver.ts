@@ -7,8 +7,10 @@ import PayrollInfo from '../../business/contracts/payroll/payrollInfo';
 import PayrollInfoVM from '../models/payroll/payrollInfo.viewmodel';
 import BenefitsDiscount from '../../business/contracts/benefits/benefitsDiscount';
 import Employee from '../../business/contracts/payroll/employee';
+import EmployeeVM from '../models/payroll/employee.viewmodel';
 import Bluebird from 'bluebird';
 import isNull from 'lodash/isNull';
+import isNil from 'lodash/isNil';
 
 
 const employeeResolver = (
@@ -16,39 +18,38 @@ const employeeResolver = (
     employeeService: IEmployeeService,
     discountsService: IDiscountsService): any => {
 
-    const getEmployeeDependents = async (employee): Bluebird<DependentVM[]> => { 
+    const getEmployeeDependents = async (employee: EmployeeVM): Bluebird<DependentVM[]> => { 
+        if(isNil(employee)) throw Error('Please provide an employee to get their dependents.');
+
         const dependents: Dependent[] = await benefitsService.getEmployeeDependents(employee.id); 
 
         return dependents.map((dependent: Dependent) => {
-            return new DependentVM(
-                dependent.id,
-                dependent.employeeId,
-                dependent.firstname,
-                dependent.lastname
-            );
+            return dependent.toViewModel();
         });
     };
 
-    const getPayrollInfo = async (employee): Bluebird<PayrollInfoVM> => { 
+    const getPayrollInfo = async (employee: EmployeeVM): Bluebird<PayrollInfoVM> => { 
+        if(isNil(employee)) throw Error('Please provide an employee to get their payroll info.');
+
         const payrollInfo: PayrollInfo = await employeeService.getEmployeePayrollInfo(employee.id); 
 
         if(isNull(payrollInfo)) throw Error(`Could not find payroll info for employee ${employee}`);
 
-        return new PayrollInfoVM(
-            payrollInfo.salary,
-            payrollInfo.paychecksPerYear,
-            payrollInfo.benefitsPackageId
-        );
+        return payrollInfo.toViewModel();
     };
 
-    const getBenefitsDiscounts = async (employee): Bluebird<string[]> => { 
-        const discounts = await discountsService.getAllEligableBenefitsDiscounts(employee); 
+    const getBenefitsDiscounts = async (employee: EmployeeVM): Bluebird<string[]> => { 
+        if(isNil(employee)) throw Error('Please provide an employee to get their eligable benefits discounts.');
+
+        const discounts: BenefitsDiscount[] = await discountsService.getAllEligableBenefitsDiscounts(employee.toContract()); 
 
         return discounts.map((discount: BenefitsDiscount) => discount.name);
     };
 
-    const getBenefitsTotalAnnualCost = async (employee): Bluebird<number> => { 
-        const totalCost = await benefitsService.getTotalAnnualCost(new Employee(employee.id, employee.firstname, employee.lastname)); 
+    const getBenefitsTotalAnnualCost = async (employee: EmployeeVM): Bluebird<number> => { 
+        if(isNil(employee)) throw Error('Please provide an employee to get their total annual benefits cost.');
+
+        const totalCost = await benefitsService.getTotalAnnualCost(employee.toContract()); 
 
         if(isNull(totalCost)) throw Error(`Could not calculate total cost for employee ${employee}. See logs for more details.`);
 

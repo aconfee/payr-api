@@ -49,6 +49,8 @@ class BenefitsService implements IBenefitsService {
      * @returns A list of dependents belonging to the employee with the provided id. 
      */
     public getEmployeeDependents = async (employeeId: number): Bluebird<Dependent[]> => {
+        if(isNil(employeeId) || employeeId < 0) throw Error('Please provide a valid employeeId.');
+
         const dependents: DependentDM[] = await this.dependentDao.findAll(new QueryOptions(
             { employeeId: employeeId }, 
             ['id', 'employeeId', 'firstname', 'lastname'])
@@ -57,12 +59,7 @@ class BenefitsService implements IBenefitsService {
         if(isNil(dependents)) return [];
 
         return dependents.map((dependent: DependentDM) => {
-            return new Dependent(
-                dependent.id,
-                dependent.employeeId,
-                dependent.firstname,
-                dependent.lastname
-            );
+            return dependent.toContract();
         });
     };
 
@@ -76,18 +73,17 @@ class BenefitsService implements IBenefitsService {
      * @returns The newly created dependent.
      */
     public addEmployeeDependent = async (employeeId: number, firstname: string, lastname: string): Bluebird<Dependent> => {
+        if(isNil(employeeId) || employeeId < 0) throw Error('Please provide a valid employeeId.');
+        if(isNil(firstname) || firstname.trim().length < 1) throw Error('Please provide a valid firstname.');
+        if(isNil(lastname) || lastname.trim().length < 1) throw Error('Please provide a valid lastname.');
+
         const newDependent: DependentDM = await this.dependentDao.create(
             new DependentDM(null, employeeId, firstname.trim(), lastname.trim())
         );
 
         if(isNil(newDependent)) return null;
 
-        return new Dependent(
-            newDependent.id,
-            newDependent.employeeId,
-            newDependent.firstname,
-            newDependent.lastname
-        );
+        return newDependent.toContract();
     };
 
     /**
@@ -98,6 +94,8 @@ class BenefitsService implements IBenefitsService {
      * @returns whether or not the record was successfully removed.
      */
     public removeEmployeeDependent = async (id: number): Bluebird<boolean> => {
+        if(isNil(id) || id < 0) throw Error('Please provide a valid id.');
+
          const deleted: boolean = await this.dependentDao.destroy(id);
 
         return deleted;
@@ -111,6 +109,8 @@ class BenefitsService implements IBenefitsService {
      * @returns The benefits package that the employee with the provided id is enrolled in.
      */
     public getEmployeeBenefitsPackage = async (employeeId: number): Bluebird<BenefitsPackage> => {
+        if(isNil(employeeId) || employeeId < 0) throw Error('Please provide a valid employeeId.');
+
         const payrollInfo: PayrollInfoDM = await this.payrollInfoDao.findOne(
             new QueryOptions({ employeeId }, ['benefitsPackageId'])
         );
@@ -124,11 +124,7 @@ class BenefitsService implements IBenefitsService {
 
         if(isNil(benefitsPackage)) return null;
 
-        return new BenefitsPackage(
-            benefitsPackage.name,
-            benefitsPackage.baseCost,
-            benefitsPackage.dependentCost
-        );
+        return benefitsPackage.toContract();
     };
 
     /**
@@ -139,6 +135,8 @@ class BenefitsService implements IBenefitsService {
      * @returns the total cost of this dependent considering the owning employees benefits plan and any eligable discounts.
      */
     public getDependentAddonCost = async (dependent: Dependent): Bluebird<number> => {
+        if(isNil(dependent)) throw Error('Please provide a valid dependent.');
+
         const benefitsPackage: BenefitsPackage = await this.getEmployeeBenefitsPackage(dependent.employeeId);
 
         if(isNil(benefitsPackage)) throw Error(`Could not find benefits package for employee ${dependent.employeeId}.`);
@@ -158,6 +156,8 @@ class BenefitsService implements IBenefitsService {
      * @returns A final calculation of the total annual cost of benefits for the provided employee.
      */
     public getTotalAnnualCost = async (employee: Employee): Bluebird<number> => {
+        if(isNil(employee)) throw Error('Please provide a valid employee.');
+
         const benefitsPackage: BenefitsPackage = await this.getEmployeeBenefitsPackage(employee.id);
 
         if(isNil(benefitsPackage)) {

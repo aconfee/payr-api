@@ -1,4 +1,7 @@
-export default class DependentDM {
+import IDataModel from '../IDataModel.datamodel';
+import Dependent from '../../../business/contracts/benefits/dependent';
+
+export default class DependentDM implements IDataModel {
     constructor(
         id?: number, 
         employeeId?: number, 
@@ -21,4 +24,13 @@ export default class DependentDM {
     public lastname: string; 
     public createdAt: Date;
     public updatedAt: Date;
+
+    public toContract(): Dependent {
+        return new Dependent(
+            this.id,
+            this.employeeId,
+            this.firstname,
+            this.lastname
+        );
+    };
 };

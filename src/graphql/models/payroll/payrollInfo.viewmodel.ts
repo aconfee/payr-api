@@ -1,4 +1,7 @@
-export default class PayrollInfoVM {
+import IViewModel from '../IViewModel.viewmodel';
+import PayrollInfo from '../../../business/contracts/payroll/payrollInfo';
+
+export default class PayrollInfoVM implements IViewModel {
     constructor(
         salary?: number, 
         paychecksPerYear?: number, 
@@ -12,4 +15,13 @@ export default class PayrollInfoVM {
     public salary: number;
     public paychecksPerYear: number; 
     public benefitsPackageId: number;
+
+    public toContract(): PayrollInfo {
+        return new PayrollInfo(
+            null,
+            this.salary,
+            this.paychecksPerYear,
+            this.benefitsPackageId
+        );
+    };
 };
