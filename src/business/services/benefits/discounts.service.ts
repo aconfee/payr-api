@@ -50,6 +50,8 @@ class DiscountsService implements IDiscountsService {
      * 
      * @returns All eligable discounts for this person.
      */
+    // NOTE There are actual reasons I'm not passing in IPerson or Person which Employee and Dependent might extend. 
+    // Reasons are partly unique to typescript, but more uniqe to the design here, and how this scales in the future.
     public getAllEligableBenefitsDiscounts = (person: Employee | Dependent): BenefitsDiscount[] => {
         if(isNil(person)) throw Error('Please provide a valid dependent or employee to get discounts for.');
 
@@ -72,12 +74,17 @@ class DiscountsService implements IDiscountsService {
 
     /**
      * All discounts. Each discount object has a criteria function that evaluates true or false, and the actual discount object to return
-     * to the employee if eligable.
+     * to the employee if eligable. Any type can pass through criteria, and typechecks will be done to apply type specific discounts.
      */
     private readonly DISCOUNTS = [
         {
-            criteria: (person: Employee | Dependent): boolean => { 
-                return !isNil(person) && !isNil(person.firstname) && person.firstname.length > 0 && person.firstname.toLowerCase()[0] === 'a';
+            criteria: (person: any): boolean => { 
+                return !isNil(person) && 
+                    (person instanceof Employee ||
+                    person instanceof Dependent) &&
+                    !isNil(person.firstname) && 
+                    person.firstname.length > 0 && 
+                    person.firstname.toLowerCase()[0] === 'a';
             },
             discountObject: new BenefitsDiscount('10% Off - Firstname starts with the letter A', 0.1)
         }
