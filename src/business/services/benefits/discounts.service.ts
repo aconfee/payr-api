@@ -30,6 +30,7 @@ class DiscountsService implements IDiscountsService {
         if(isNil(cost) || cost <= 0) throw Error('Please provide a valid current cost to apply discounts to.');
 
         const discounts: BenefitsDiscount[] = this.getAllEligableBenefitsDiscounts(person);
+
         var totalDiscountPercent = 0.0;
         discounts.forEach((discount: BenefitsDiscount) => {
             totalDiscountPercent += discount.discountPercent;
@@ -86,7 +87,9 @@ class DiscountsService implements IDiscountsService {
         let hash: string;
 
         Object.keys(person).forEach((key) => {
-            hash += person[key].toString();
+            if(!isNil(person[key])){
+                hash += person[key].toString();
+            }
         });
 
         return hash;

@@ -1,17 +1,17 @@
-import Dependent from '../../contracts/benefits/dependent';
-import BenefitsPackage from '../../contracts/benefits/benefitsPackage';
-import Employee from '../../contracts/payroll/employee';
-import DependentDM from '../../../data/models/benefits/dependent.datamodel';
-import BenefitsPackageDM from '../../../data/models/benefits/benefitsPackage.datamodel';
-import EmployeeDM from '../../../data/models/payroll/employee.datamodel';
-import PayrollInfoDM from '../../../data/models/payroll/payrollInfo.datamodel';
-import Bluebird from 'bluebird'; 
-import { IDiscountsService } from './discounts.service';
-import { IPayrollInfoDao } from '../../../data/daos/payroll/payrollInfo.dao';
+import Bluebird from 'bluebird';
+import isNil from 'lodash/isNil';
+
 import { IBenefitsPackageDao } from '../../../data/daos/benefits/benefitsPackage.dao';
 import { IDependentDao } from '../../../data/daos/benefits/dependent.dao';
 import { QueryOptions } from '../../../data/daos/IDao.dao';
-import isNil from 'lodash/isNull';
+import { IPayrollInfoDao } from '../../../data/daos/payroll/payrollInfo.dao';
+import BenefitsPackageDM from '../../../data/models/benefits/benefitsPackage.datamodel';
+import DependentDM from '../../../data/models/benefits/dependent.datamodel';
+import PayrollInfoDM from '../../../data/models/payroll/payrollInfo.datamodel';
+import BenefitsPackage from '../../contracts/benefits/benefitsPackage';
+import Dependent from '../../contracts/benefits/dependent';
+import Employee from '../../contracts/payroll/employee';
+import { IDiscountsService } from './discounts.service';
 
 export interface IBenefitsService {
     getEmployeeDependents(employeeId: number): Bluebird<Dependent[]>;
@@ -115,7 +115,7 @@ class BenefitsService implements IBenefitsService {
             new QueryOptions({ employeeId }, ['benefitsPackageId'])
         );
 
-        if(isNil(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}. Therefore can't find benefits package.`);
+        if(isNil(payrollInfo)) throw Error(`Could not find payroll info for employee with id ${employeeId}. All employees should have payroll info.`);
 
         const benefitsPackage: BenefitsPackageDM = await this.benefitsPackageDao.findById(
             payrollInfo.benefitsPackageId,
@@ -160,10 +160,7 @@ class BenefitsService implements IBenefitsService {
 
         const benefitsPackage: BenefitsPackage = await this.getEmployeeBenefitsPackage(employee.id);
 
-        if(isNil(benefitsPackage)) {
-            console.error(`Could not find benefits package for employee ${employee}.`);
-            return null;
-        }
+        if(isNil(benefitsPackage)) throw Error(`Could not find benefits package for employee ${employee.id}.`);
 
         const baseCost: number = this.discountsService.applyBenefitsDiscounts(employee, benefitsPackage.baseCost);
         const dependents: Dependent[] = await this.getEmployeeDependents(employee.id);
