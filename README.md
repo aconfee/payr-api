@@ -1,10 +1,10 @@
 [![CircleCI](https://circleci.com/gh/aconfee/payr-api.svg?style=svg)](https://circleci.com/gh/aconfee/payr-api)
 
 # Payr
-###### payr.us-west-2.elasticbeanstalk.com
+###### payr.us-west-2.elasticbeanstalk.com/graphiql
 
 ### Description
-Boilerplate
+API is independent of front end. Using GraphQL and Apollo to expose to consuming clients for maximum flexibility and reduced dependencies. 
 
 ### Setup
 
